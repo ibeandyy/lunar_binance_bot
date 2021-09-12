@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, datetime
 from binance import Client
+import time
 import json
 
 
@@ -57,13 +58,8 @@ def moon_phase(month, day, year):
     return status, light  # date, status, light
 
 
-# Get today's date,
-today = str(date.today().strftime('%m,%d,%Y'))
-# Split date into three variables
-month, day, year = tuple(map(int, today.split(',')))
-# Get today's moon phase + light value
-todays_moon, light = (moon_phase(month, day, year))
-print(f'Today\'s current moon phase is:', todays_moon, 'with a total light value of:', light)
+
+
 
 def moon_check(todays_moon, light):
     # Returns True if moon is in final 3 days of waxing gibbous indicating a buy
@@ -89,20 +85,51 @@ def sell_order(token_pair, amount):
     client.order_market_buy(symbol=token_pair, quantity=amount)
 
 
-flag = moon_check(todays_moon, light)
+while True:
+    # Get today's date,
+    today = str(date.today().strftime('%m,%d,%Y'))
+    # Split date into three variables
+    month, day, year = tuple(map(int, today.split(',')))
+    # Get today's moon phase + light value
+    todays_moon, light = (moon_phase(month, day, year))
+    flag = moon_check(todays_moon, light)
+    print(f'Today\'s current moon phase is:', todays_moon, 'with a total light value of:', light)
 
-if flag:
-    buy_order(symbol, buyAmount)
-    print(f'Bought', {buyAmount}, 'of',{symbol})
-elif flag is False:
-    sell_order(symbol, sellAmount)
-    print(f'Sold', {sellAmount}, 'of', {symbol})
-elif flag is None:
-    print('Moonboys ain\'t ready for this jelly. Here\'s today\'s portfolio:')
-    print(client.get_account())
-#
-# buy_order(tokenPair, buyAmount)
-# sell_order(tokenPair, sellAmount)
+
+    if flag is None:
+        print('No full/new moon detected soon, sleeping. Today\'s balance:')
+        print(client.get_account())
+        time.sleep(10)
+        continue
+    elif flag:
+        for ticker, buy in zip(symbol, buyAmount):
+            buy_order(ticker, buy)
+            print(f'Bought', {buy}, 'of', {ticker})
+            if ticker == data['tokenSymbol'][-1]:
+                time.sleep(86401)
+                break
+            else:
+                time.sleep(3)
+    elif flag is False:
+        for ticker, sell in zip(symbol, sellAmount):
+            sell_order(ticker, sell)
+            if ticker == data['tokenSymbol'][-1]:
+                time.sleep(86401)
+                break
+            else:
+                time.sleep(3)
+
+            print(f'Sold', {sell}, 'of', {ticker})
+
+
+
+
+
+
+
+
+
+
 
 
 
