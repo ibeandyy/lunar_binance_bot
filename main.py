@@ -3,8 +3,10 @@ from binance import Client
 import time
 import json
 from LicenseManager import license_check
+#DEBUG LICENSE TO REMOVE
+license_key = '5nb4-4w47-p0aa-zudq-56sq'
 
-license_key = input("Please enter license key:")
+#license_key = input("Please enter license key:")
 while license_check(license_key):
 
     # Grab API Data, Token pair to Trade, Amount to buy from local JSON
@@ -61,9 +63,6 @@ while license_check(license_key):
         return status, light  # date, status, light
 
 
-
-
-
     def moon_check(todays_moon, light):
         # Returns True if moon is in final 3 days of waxing gibbous indicating a buy
         if "waxing gibbous" in todays_moon and light >= 90:
@@ -88,41 +87,60 @@ while license_check(license_key):
         client.order_market_buy(symbol=token_pair, quantity=amount)
 
 
-    while True:
-        # Get today's date,
-        today = str(date.today().strftime('%m,%d,%Y'))
-        # Split date into three variables
-        month, day, year = tuple(map(int, today.split(',')))
-        # Get today's moon phase + light value
-        todays_moon, light = (moon_phase(month, day, year))
-        flag = moon_check(todays_moon, light)
-        print(f'Today\'s current moon phase is:', todays_moon, 'with a total light value of:', light)
+    if __name__ == '__main__':
+        while True:
+            # Get today's date,
+            today = str(date.today().strftime('%m,%d,%Y'))
+            # Split date into three variables
+            month, day, year = tuple(map(int, today.split(',')))
+            # Get today's moon phase + light value
+            todays_moon, light = (moon_phase(month, day, year))
+            flag = moon_check(todays_moon, light)
+            print(f'Today\'s current moon phase is:', todays_moon, 'with a total light value of:', light)
 
-
-        if flag is None:
-            print('No full/new moon detected soon, sleeping. Today\'s balance:')
-            print(client.get_account())
-            time.sleep(10)
-            continue
-        elif flag:
-            for ticker, buy in zip(symbol, buyAmount):
-                buy_order(ticker, buy)
-                print(f'Bought', {buy}, 'of', {ticker})
-                if ticker == data['tokenSymbol'][-1]:
-                    time.sleep(86401)
-                    break
-                else:
-                    time.sleep(3)
-        elif flag is False:
-            for ticker, sell in zip(symbol, sellAmount):
-                sell_order(ticker, sell)
-                if ticker == data['tokenSymbol'][-1]:
-                    time.sleep(86401)
-                    break
-                else:
-                    time.sleep(3)
-
-                print(f'Sold', {sell}, 'of', {ticker})
+            # Check if today's moon is new or full, None values indicate today's date shouldn't be traded.
+            if flag is None:
+                print('No transactions required, sleeping. Today\'s account information:')
+                try:
+                    print(client.get_account())
+                except:
+                    print("Error retrieving account information, retrying")
+                    time.sleep(60)
+                    continue
+                # Sleep for an hour and check again.
+                time.sleep(5)
+                continue
+            # If today's date is 3 days prior to the full moon, iterate over token pairs and buy amounts, buy each
+            # pair and wait three seconds in-between to avoid API lockout, sleep 24H after performing all buys from list
+            elif flag:
+                for ticker, buy in zip(symbol, buyAmount):
+                    try:
+                        buy_order(ticker, buy)
+                    except:
+                        print("Something went wrong, retrying")
+                        continue
+                    print(f'Bought', {buy}, 'of', {ticker})
+                    if ticker == data['tokenSymbol'][-1]:
+                        time.sleep(86401)
+                        break
+                    else:
+                        time.sleep(3)
+                        print("Something went wrong")
+            # If today's date is 3 days prior to the new moon, iterate over token pairs and buy amounts, sell each
+            # pair and wait three seconds in-between to avoid API lockout, sleep 24H after performing all buys from list.
+            elif flag is False:
+                for ticker, sell in zip(symbol, sellAmount):
+                    try:
+                        sell_order(ticker, sell)
+                    except:
+                        print("Something went wrong, retrying")
+                        continue
+                    if ticker == data['tokenSymbol'][-1]:
+                        time.sleep(86401)
+                        break
+                    else:
+                        time.sleep(3)
+                    print(f'Sold', {sell}, 'of', {ticker})
 
 
 
