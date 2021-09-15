@@ -1,0 +1,6 @@
+{"apiKey":"FWSZColzUi6onFbxDkm4XWNmVcG46vhh7h1QcL7Zz26pWyjHDaK7rx2CQByM6y5X",
+"apiSecret":"Mw9Bp2hDTWkqMfa3cNrArDRMB0bmbPYG43IOSwEjjm0w8JXRv8MteOzUHADo7FLS",
+"tokenSymbol":["ETHBTC", "BTCUSDT"],
+"buyAmount": [1, 0.001],
+"sellAmount": [1,0.001]
+}
